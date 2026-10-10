@@ -1,0 +1,11 @@
+/* Window */
+"Unit:" = "Unité :";
+"Radians" = "Radians";
+"Degrees" = "Degrés";
+"Show standard angles" = "Afficher les angles standards";
+"Show sin/cos" = "Afficher sin/cos";
+
+/* Menus */
+"Page Setup…" = "Format d’impression…";
+"Print…" = "Imprimer…";
+"Trigonometry Help" = "Aide Trigonometry";
