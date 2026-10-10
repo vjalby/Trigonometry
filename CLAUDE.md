@@ -9,6 +9,7 @@ L'utilisateur parle français : répondre en français. Les commentaires du code
 - Version 1.4, macOS 13 minimum, binaire universel arm64 + x86_64.
 - Identifiant `org.jalby.trigonometry`, signature ad hoc (`CODE_SIGN_IDENTITY = "-"`, style manuel), hardened runtime. Pas de sandbox, pas d'entitlements, pas de notarisation.
 - Dépôt git (branche `main`), destiné à https://github.com/vjalby/Trigonometry. Les archives (`Legacy/`, `Trigonometry-1.3-original.zip`) restent sur la machine de l'auteur et sont exclues par `.gitignore`, comme `build/` et `Trigonometry.app`. Il n'y a ni tests ni CI.
+- Licence : GNU GPL version 3 (choisie par l'auteur le 10 octobre 2026). Le texte officiel est dans `LICENSE` à la racine, copié tel quel dans les ressources du bundle (inscrit dans le pbxproj) ; les deux `ReadMe.rtf` la mentionnent (ligne de copyright, section Distribution, informations légales). Les fichiers Swift n'ont pas d'en-tête de licence. L'auteur est seul détenteur des droits : n'ajouter aucune dépendance tierce sans vérifier sa licence avec lui.
 - Copyright « Vincent Jalby » partout. L'ancien nom « VoJou Software » a été retiré à la demande de l'auteur : ne pas le réintroduire.
 
 ## Historique de la modernisation (10 octobre 2026)
@@ -37,14 +38,15 @@ Changements visibles par rapport à la 1.3, tous voulus :
 
 ## Sources
 
-Quatre fichiers Swift à la racine, sans dépendance externe.
+Cinq fichiers Swift à la racine, sans dépendance externe.
 
 | Fichier | Rôle |
 |---|---|
 | `TrigoModel.swift` | `TrigoModel` (ObservableObject) : `theta`, `point` (M dans le repère du cercle, rayon 1), `isDragging`. Logique de glisser, accrochage aux angles remarquables, écriture de l'angle (`label(for:unit:)`). Enum `AngleUnit` (0 radian, 1 degré). |
 | `TrigoView.swift` | Dessin du graphe dans un `Canvas` (struct privée `TrigoDrawing`), palette clair/sombre (`Palette`), tableau θ / cos / sin (`TrigoValues`, partagé entre `TrigoValuesView` pour le panneau latéral et l'encadré de l'impression). |
 | `ContentView.swift` | Contenu de la fenêtre, en deux colonnes séparées par un filet : à gauche `TrigoView` + `DragGesture`, à droite un panneau de 190 pt sur fond gris très clair (radio Radians/Degrés, deux cases à cocher, tableau des valeurs). Contient aussi l'impression (`TrigoPrintView`, `makePrintView`, `printDiagram`). |
-| `TrigonometryApp.swift` | `@main`, scène `Window` unique, menus Format d'impression (⇧⌘P), Imprimer (⌘P) et Aide (⌘?, ouvre le `ReadMe.rtf` localisé du bundle). |
+| `HelpView.swift` | Fenêtre d'aide : affiche le `ReadMe.rtf` localisé du bundle dans une `NSTextView` en lecture seule (`NSViewRepresentable`), avec adaptation au mode sombre et liens `https://` rendus cliquables. |
+| `TrigonometryApp.swift` | `@main`, deux scènes `Window` (la fenêtre principale `trigoWindow` et l'aide `helpWindow`), menus Format d'impression (⇧⌘P), Imprimer (⌘P) et Aide (⌘?, ouvre la fenêtre d'aide via `openWindow`). |
 
 Préférences via `@AppStorage`, déclarées à la fois dans `ContentView` et dans `TrigonometryApp` (qui en a besoin pour l'impression) : `prefs_angleUnit` (Int, 0 ou 1), `prefs_standardAngles`, `prefs_sinCos`. Ces clés sont celles de la version d'origine ; les garder.
 
@@ -74,14 +76,15 @@ La logique de glisser est portée à l'identique de l'original (comparer avec `L
 - `en.lproj` et `fr.lproj`, région de développement `en`.
 - Les chaînes anglaises du code servent de clés. `en.lproj/Localizable.strings` ne contient qu'un commentaire ; toute nouvelle chaîne d'interface doit être ajoutée dans `fr.lproj/Localizable.strings`.
 - `InfoPlist.strings` (UTF-8) : nom du bundle et copyright « © Vincent Jalby, 2004-2026 », à tenir à jour dans les deux langues.
-- `ReadMe.rtf` dans chaque langue, sert d'aide ; pointe vers https://vincent.jalby.org.
+- `ReadMe.rtf` dans chaque langue, sert d'aide (affiché dans la fenêtre d'aide, plus ouvert dans TextEdit) ; pointe vers https://vincent.jalby.org.
 
 ## Projet Xcode
 
 `Trigonometry.xcodeproj/project.pbxproj` est écrit à la main : format classique (`objectVersion = 56`), références de fichiers explicites, identifiants de la forme `AA00…`, pas de groupes synchronisés.
 
+- Avant d'attribuer un identifiant `AA00…`, vérifier qu'il est libre (`grep` dans le pbxproj) : la numérotation n'est pas continue et une collision rend le projet illisible pour Xcode.
 - **Ajouter un fichier source ne suffit pas** : il faut l'inscrire dans le pbxproj (PBXFileReference, PBXBuildFile, groupe Sources, phase Sources). Idem pour une ressource (phase Resources, et PBXVariantGroup si elle est localisée).
-- `Info.plist` est explicite (`GENERATE_INFOPLIST_FILE = NO`) et tire ses valeurs des réglages de build. Le numéro de version se change dans le pbxproj : `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION`, dans les deux configurations de la cible (Debug et Release). `LSMinimumSystemVersion` suit `MACOSX_DEPLOYMENT_TARGET`.
+- `Info.plist` est explicite (`GENERATE_INFOPLIST_FILE = NO`) et tire ses valeurs des réglages de build. Le numéro de version se change dans le pbxproj, dans les deux configurations de la cible (Debug et Release) : `MARKETING_VERSION` est la version affichée (1.4) et `CURRENT_PROJECT_VERSION` le numéro de build, un entier à augmenter de 1 à chaque version diffusée (5 pour la 1.4, cinquième version publiée ; il doit rester supérieur à l'ancien « 1.4 »). La fenêtre « À propos » affiche « Version 1.4 (5) ». `LSMinimumSystemVersion` suit `MACOSX_DEPLOYMENT_TARGET`.
 - Pas de scheme partagé : `xcodebuild` crée automatiquement le scheme `Trigonometry`.
 - `xcuserdata/` est propre à la machine.
 
@@ -102,6 +105,16 @@ rm -rf Trigonometry.app && cp -R build/DerivedData/Build/Products/Release/Trigon
 - `build/` est régénérable. `Trigonometry.app` à la racine est une copie du dernier build Release, pas une source.
 - Vérifier un build : `lipo -archs Trigonometry.app/Contents/MacOS/Trigonometry` (attendu : `x86_64 arm64`) et `codesign -dv Trigonometry.app` (attendu : `flags=0x10002(adhoc,runtime)`).
 
+## Distribution
+
+L'auteur diffuse l'application sur sa page personnelle (https://vincent.jalby.org), pas par une release GitHub. L'archive est `build/Trigonometry-<version>.zip` (hors dépôt) : un dossier « Trigonometry <version> » contenant `Trigonometry.app` (Release), `ReadMe.rtf` (anglais) et `LisezMoi.rtf` (français). Après un build Release copié à la racine :
+
+```bash
+D="build/dist/Trigonometry 1.4" && rm -rf build/dist build/Trigonometry-1.4.zip && mkdir -p "$D" && cp -R Trigonometry.app "$D/" && cp en.lproj/ReadMe.rtf "$D/ReadMe.rtf" && cp fr.lproj/ReadMe.rtf "$D/LisezMoi.rtf" && chmod 644 "$D"/*.rtf && xattr -cr "$D" && ditto -c -k --norsrc --keepParent "$D" build/Trigonometry-1.4.zip && rm -rf build/dist
+```
+
+`xattr -cr` et `--norsrc` évitent d'embarquer les attributs étendus du Finder (dossier `__MACOSX`). Vérifier l'archive en la décompressant avec `ditto -x -k` puis `codesign --verify --deep --strict` sur l'application. L'application n'étant pas notarisée, une copie téléchargée par un navigateur sera bloquée au premier lancement : la marche à suivre est dans la section Installation des ReadMe.
+
 ## Icône
 
 `trigo.icns` à la racine (référencée par `CFBundleIconFile = trigo`, pas de catalogue d'assets). Elle est produite par `Icon/make_icon.swift` :
@@ -114,9 +127,9 @@ Le script écrit `icon-1024.png` (aperçu, conservé dans `Icon/`) et `trigo.ico
 
 ## Vérification
 
-Il n'y a pas de tests. Lors de la modernisation, Claude n'avait accès ni à l'écran ni à l'accessibilité ; le rendu a été contrôlé hors écran par un harnais jetable : `swiftc TrigoModel.swift TrigoView.swift ContentView.swift main.swift`, où `main.swift` rend la vue dans un PNG (`NSHostingView` + `cacheDisplay`) et l'impression dans un PDF (`dataWithPDF` sur la vue de `makePrintView`). Ce harnais n'est pas dans le dossier ; le recréer dans un répertoire temporaire au besoin (ne pas inclure `TrigonometryApp.swift`, qui porte `@main`).
+Il n'y a pas de tests. Lors de la modernisation, Claude n'avait accès ni à l'écran ni à l'accessibilité ; le rendu a été contrôlé hors écran par un harnais jetable : `swiftc TrigoModel.swift TrigoView.swift ContentView.swift HelpView.swift main.swift`, où `main.swift` rend la vue dans un PNG (`NSHostingView` + `cacheDisplay`) et l'impression dans un PDF (`dataWithPDF` sur la vue de `makePrintView`). Ce harnais n'est pas dans le dossier ; le recréer dans un répertoire temporaire au besoin (ne pas inclure `TrigonometryApp.swift`, qui porte `@main`).
 
-**Jamais testé par Claude** : le glisser à la souris dans la vraie fenêtre et le dialogue d'impression. Après une modification qui y touche, le dire et demander à l'auteur d'essayer.
+**Jamais testé par Claude** : le glisser à la souris dans la vraie fenêtre, le dialogue d'impression et l'ouverture de la fenêtre d'aide depuis le menu. Après une modification qui y touche, le dire et demander à l'auteur d'essayer.
 
 ## Archives : ne pas toucher
 

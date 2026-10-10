@@ -14,7 +14,9 @@
 		AA0000000000000000000009 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000A /* InfoPlist.strings */; };
 		AA000000000000000000000B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000C /* Localizable.strings */; };
 		AA000000000000000000000D /* trigo.icns in Resources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000E /* trigo.icns */; };
+		AA0000000000000000000030 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000031 /* LICENSE */; };
 		AA00000000000000000000FF /* TrigoModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000F /* TrigoModel.swift */; };
+		AA0000000000000000000032 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000033 /* HelpView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,8 +24,10 @@
 		AA0000000000000000000004 /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000006 /* TrigoView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrigoView.swift; sourceTree = "<group>"; };
 		AA000000000000000000000F /* TrigoModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrigoModel.swift; sourceTree = "<group>"; };
+		AA0000000000000000000033 /* HelpView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA000000000000000000000E /* trigo.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = trigo.icns; sourceTree = "<group>"; };
+		AA0000000000000000000031 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		AA0000000000000000000012 /* Trigonometry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Trigonometry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000013 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/ReadMe.rtf; sourceTree = "<group>"; };
 		AA0000000000000000000021 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = fr; path = fr.lproj/ReadMe.rtf; sourceTree = "<group>"; };
@@ -60,6 +64,7 @@
 				AA000000000000000000000F /* TrigoModel.swift */,
 				AA0000000000000000000004 /* ContentView.swift */,
 				AA0000000000000000000006 /* TrigoView.swift */,
+				AA0000000000000000000033 /* HelpView.swift */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -69,6 +74,7 @@
 			children = (
 				AA0000000000000000000011 /* Info.plist */,
 				AA000000000000000000000E /* trigo.icns */,
+				AA0000000000000000000031 /* LICENSE */,
 				AA0000000000000000000008 /* ReadMe.rtf */,
 				AA000000000000000000000A /* InfoPlist.strings */,
 				AA000000000000000000000C /* Localizable.strings */,
@@ -141,6 +147,7 @@
 				AA0000000000000000000009 /* InfoPlist.strings in Resources */,
 				AA000000000000000000000B /* Localizable.strings in Resources */,
 				AA000000000000000000000D /* trigo.icns in Resources */,
+				AA0000000000000000000030 /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -155,6 +162,7 @@
 				AA0000000000000000000001 /* TrigonometryApp.swift in Sources */,
 				AA0000000000000000000003 /* ContentView.swift in Sources */,
 				AA0000000000000000000005 /* TrigoView.swift in Sources */,
+				AA0000000000000000000032 /* HelpView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,7 +282,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -292,7 +300,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.4;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;

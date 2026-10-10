@@ -27,13 +27,25 @@ struct TrigonometryApp: App {
                 .keyboardShortcut("p")
             }
             CommandGroup(replacing: .help) {
-                Button("Trigonometry Help") {
-                    if let url = Bundle.main.url(forResource: "ReadMe", withExtension: "rtf") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }
-                .keyboardShortcut("?")
+                HelpCommand()
             }
         }
+
+        Window("Trigonometry Help", id: "helpWindow") {
+            HelpView()
+        }
+        .defaultSize(width: 560, height: 620)
+    }
+}
+
+/// L'article du menu Aide ; une vue à part, parce que `openWindow` se lit dans l'environnement.
+private struct HelpCommand: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button("Trigonometry Help") {
+            openWindow(id: "helpWindow")
+        }
+        .keyboardShortcut("?")
     }
 }
