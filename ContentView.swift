@@ -26,7 +26,7 @@ struct ContentView: View {
 
             Divider()
 
-            // Panneau latéral : réglages et valeurs
+            // Side panel: settings and values
             VStack(alignment: .leading, spacing: 16) {
                 section("Unit") {
                     Picker("Unit", selection: $angleUnit) {
@@ -48,7 +48,7 @@ struct ContentView: View {
             }
             .padding(14)
             .frame(width: 190)
-            .background(Color(white: colorScheme == .dark ? 0.17 : 0.95)) // gris très clair (sombre en mode sombre)
+            .background(Color(white: colorScheme == .dark ? 0.17 : 0.95)) // very light gray (dark gray in Dark Mode)
         }
     }
 
@@ -64,9 +64,9 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Impression
+// MARK: - Printing
 
-/// Vue AppKit qui trace le dessin SwiftUI (en vectoriel) dans le contexte d'impression.
+/// AppKit view that replays the SwiftUI drawing (as vector graphics) into the print context.
 final class TrigoPrintView: NSView {
     private let render: (CGContext) -> Void
 
@@ -105,8 +105,8 @@ func printDiagram(model: TrigoModel, angleUnit: AngleUnit, standardAngles: Bool,
     printInfo.rightMargin = 33
     printInfo.isHorizontallyCentered = true
     printInfo.isVerticallyCentered = true
-    // La zone imprimable de l'imprimante peut être plus petite que la page moins les marges :
-    // sans ajustement, le dessin déborde sur une seconde page vide.
+    // The printer's imageable area can be smaller than the page minus the margins:
+    // without fitting, the drawing spills over onto a second, empty page.
     printInfo.horizontalPagination = .fit
     printInfo.verticalPagination = .fit
 

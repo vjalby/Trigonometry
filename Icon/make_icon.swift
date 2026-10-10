@@ -1,10 +1,10 @@
-// Génère l'icône de Trigonometry : swift make_icon.swift <dossier de sortie>
-// puis : iconutil -c icns <dossier>/trigo.iconset -o trigo.icns
+// Generates the Trigonometry icon: swift make_icon.swift <output folder>
+// then: iconutil -c icns <folder>/trigo.iconset -o trigo.icns
 import AppKit
 
 struct Style {
     var name: String
-    var top, bottom: NSColor        // dégradé du fond
+    var top, bottom: NSColor        // background gradient
     var circle, axes, radius, cosine, sine, wedge, dot: NSColor
 }
 
@@ -37,7 +37,7 @@ func draw(_ s: Style, size: CGFloat) -> NSBitmapImageRep {
     let k = size / 1024
     let transform = NSAffineTransform(); transform.scale(by: k); transform.concat()
 
-    // Forme macOS : carré arrondi de 824 pt dans un canevas de 1024 pt, avec ombre portée
+    // macOS shape: 824 pt rounded square in a 1024 pt canvas, with a drop shadow
     let shape = NSBezierPath(roundedRect: NSRect(x: 100, y: 100, width: 824, height: 824), xRadius: 185, yRadius: 185)
     NSGraphicsContext.saveGraphicsState()
     let shadow = NSShadow()
@@ -54,7 +54,7 @@ func draw(_ s: Style, size: CGFloat) -> NSBitmapImageRep {
 
     let c = NSPoint(x: 512, y: 512)
     let r: CGFloat = 312
-    let w: CGFloat = size <= 64 ? 1.5 : 1   // traits plus épais aux petites tailles
+    let w: CGFloat = size <= 64 ? 1.5 : 1   // thicker strokes at small sizes
     let theta = 52.0 * Double.pi / 180
     let m = NSPoint(x: c.x + r * cos(theta), y: c.y + r * sin(theta))
     let foot = NSPoint(x: m.x, y: c.y)
@@ -63,19 +63,19 @@ func draw(_ s: Style, size: CGFloat) -> NSBitmapImageRep {
     line(NSPoint(x: c.x - 385, y: c.y), NSPoint(x: c.x + 385, y: c.y), s.axes, 10 * w)
     line(NSPoint(x: c.x, y: c.y - 385), NSPoint(x: c.x, y: c.y + 385), s.axes, 10 * w)
 
-    // Secteur de l'angle
+    // Angle sector
     let wedge = NSBezierPath()
     wedge.move(to: c)
     wedge.appendArc(withCenter: c, radius: 140, startAngle: 0, endAngle: 52)
     wedge.close()
     s.wedge.setFill(); wedge.fill()
 
-    // Cercle
+    // Circle
     let circle = NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
     circle.lineWidth = 22 * w
     s.circle.setStroke(); circle.stroke()
 
-    // cos, sin, rayon, point M
+    // cos, sin, radius, point M
     line(c, foot, s.cosine, 32 * w)
     line(foot, m, s.sine, 32 * w)
     line(c, m, s.radius, 32 * w)
@@ -91,11 +91,11 @@ func draw(_ s: Style, size: CGFloat) -> NSBitmapImageRep {
 }
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "."
-// Aperçu en 1024 px
+// 1024 px preview
 try! draw(styles[0], size: 1024).representation(using: .png, properties: [:])!
     .write(to: URL(fileURLWithPath: "\(out)/icon-1024.png"))
 
-// Jeu d'icônes complet, à convertir avec iconutil
+// Full icon set, to be converted with iconutil
 let iconset = "\(out)/trigo.iconset"
 try? FileManager.default.createDirectory(atPath: iconset, withIntermediateDirectories: true)
 for (points, scale) in [(16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2), (256, 1), (256, 2), (512, 1), (512, 2)] {

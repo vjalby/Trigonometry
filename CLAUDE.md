@@ -2,7 +2,7 @@
 
 Petit utilitaire macOS de Vincent Jalby (2004-2008 en Objective-C/nib, réécrit en Swift/SwiftUI en 2026) qui affiche le cercle trigonométrique : on fait glisser le point M sur le cercle et l'application montre l'angle θ, son cosinus et son sinus.
 
-L'utilisateur parle français : répondre en français. Les commentaires du code sont en français.
+L'utilisateur parle français : répondre en français. Les commentaires du code et les messages de commit s'écrivent en anglais (demande de l'auteur, 10 octobre 2026 ; les commentaires existants ont été traduits ce jour-là).
 
 ## État
 

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Le dessin du cercle trigonométrique.
+/// The drawing of the unit circle.
 struct TrigoView: View {
     @ObservedObject var model: TrigoModel
     var angleUnit: AngleUnit
@@ -20,19 +20,19 @@ struct TrigoView: View {
         }
     }
 
-    /// Longueur (en points) du rayon du cercle.
+    /// Length (in points) of the circle's radius.
     static func unit(for size: CGSize, printing: Bool = false) -> CGFloat {
         min(size.width, size.height) / (printing ? 4 : 3)
     }
 
-    /// Convertit une position dans la vue en coordonnées dans le repère du cercle.
+    /// Converts a position in the view into coordinates in the circle's coordinate system.
     static func unitPoint(_ location: CGPoint, in size: CGSize) -> CGPoint {
         let unit = unit(for: size)
         return CGPoint(x: (location.x - size.width / 2) / unit, y: (size.height / 2 - location.y) / unit)
     }
 }
 
-/// Tableau θ / cos(θ) / sin(θ) du panneau latéral, à taille fixe.
+/// The θ / cos(θ) / sin(θ) table of the side panel, at a fixed size.
 struct TrigoValuesView: View {
     @ObservedObject var model: TrigoModel
     var angleUnit: AngleUnit
@@ -40,7 +40,7 @@ struct TrigoValuesView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private static let fontSize: CGFloat = 16
-    /// Interligne, en hauteurs de capitale : 44 pt à cette taille (un peu plus aéré que dans l'encadré imprimé).
+    /// Line spacing, in cap heights: 44 pt at this size (a little looser than in the printed box).
     private static let lineSpacing: CGFloat = 3.83
 
     var body: some View {
@@ -79,12 +79,12 @@ private struct TrigoDrawing {
     private var theta: Double { view.model.theta }
     private var thetaColor: Color { theta >= 0 ? palette.positive : palette.negative }
 
-    /// Point du repère (origine au centre, axe y vers le haut) → point de la vue.
+    /// Point in the circle's coordinate system (origin at the center, y axis up) → point in the view.
     private func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
         CGPoint(x: size.width / 2 + x, y: size.height / 2 - y)
     }
 
-    // MARK: Texte
+    // MARK: Text
 
     private func fontSize(_ size: CGFloat) -> CGFloat { max(9, size.rounded(.down)) }
 
@@ -113,11 +113,11 @@ private struct TrigoDrawing {
         context.fill(Path(ellipseIn: rect), with: .color(color))
     }
 
-    // MARK: Dessin
+    // MARK: Drawing
 
     func draw() {
         if !view.printing {
-            // Trace le fond
+            // Draw the background
             context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(palette.background))
         }
 
@@ -125,17 +125,17 @@ private struct TrigoDrawing {
 
         let m = p(view.model.point.x * unit, view.model.point.y * unit)
 
-        // Affichage des coordonnées
+        // Draw the coordinates
         let quarterTurns = theta * 2 / .pi
         if view.sinCos && !view.model.isDragging && abs(quarterTurns - quarterTurns.rounded(.towardZero)) > 0.01 {
             drawCoordinates()
         }
 
-        // Affichage du point M sur le cercle et du segment OM
+        // Draw point M on the circle and segment OM
         dot(at: m, radius: 0.03 * unit, color: thetaColor)
         line(from: p(0, 0), to: m, color: thetaColor)
 
-        // Affichage de l'arc de l'angle
+        // Draw the arc of the angle
         var arc = Path()
         arc.move(to: p(0.25 * unit, 0))
         let steps = max(1, Int(abs(theta) / 0.02))
@@ -145,22 +145,22 @@ private struct TrigoDrawing {
         }
         context.stroke(arc, with: .color(thetaColor))
 
-        // Affichage de theta
+        // Draw theta
         let label = TrigoModel.label(for: theta, unit: view.angleUnit)
         context.draw(text(label, size: 0.08 * unit, color: thetaColor),
                      at: p(0.4 * unit * cos(theta / 2), 0.4 * unit * sin(theta / 2)), anchor: .center)
 
-        // À l'écran, les valeurs sont dans le panneau latéral
+        // On screen, the values are shown in the side panel
         if view.printing {
             drawResume()
         }
     }
 
     private func drawCircleAndAxes() {
-        // Affichage des axes
+        // Draw the axes
         line(from: p(-1.2 * unit, 0), to: p(1.2 * unit, 0), color: palette.gray)
         line(from: p(0, -1.2 * unit), to: p(0, 1.2 * unit), color: palette.gray)
-        // Affichage des flèches
+        // Draw the arrowheads
         var arrows = Path()
         arrows.addLines([p(1.2 * unit, -0.02 * unit), p(1.26 * unit, 0), p(1.2 * unit, 0.02 * unit)])
         arrows.closeSubpath()
@@ -168,11 +168,11 @@ private struct TrigoDrawing {
         arrows.closeSubpath()
         context.fill(arrows, with: .color(palette.gray))
 
-        // Affichage du cercle
+        // Draw the circle
         context.stroke(Path(ellipseIn: CGRect(origin: p(-unit, unit), size: CGSize(width: 2 * unit, height: 2 * unit))),
                        with: .color(palette.circle))
 
-        // Affichage des labels
+        // Draw the labels
         let labels: [(String, CGFloat, CGFloat)] = [
             ("0", -0.1, -0.15), ("1", 1.05, -0.15), (TrigoModel.decimal(-1, digits: 0), -1.15, -0.15), ("1", -0.1, 1.01), (TrigoModel.decimal(-1, digits: 0), -0.15, -1.15),
             ("x", 1.18, -0.15), ("y", 0.05, 1.15),
@@ -184,7 +184,7 @@ private struct TrigoDrawing {
         if view.standardAngles {
             for quarter in -2..<2 {
                 for offset in [0, Double.pi / 6, Double.pi / 4, Double.pi / 3] {
-                    // Le demi-tour s'écrit π (180°) et non −π
+                    // The half turn is written π (180°), not −π
                     let angle = offset + Double(quarter) * .pi / 2
                     drawRefPoint(angle == -.pi ? .pi : angle)
                 }
@@ -197,9 +197,9 @@ private struct TrigoDrawing {
         let y = unit * sin(angle)
         dot(at: p(x, y), radius: 0.012 * unit, color: palette.text)
         let label = TrigoModel.label(for: angle, unit: view.angleUnit)
-        // L'étiquette de −π/2 est descendue pour ne pas chevaucher le « −1 » de l'axe
+        // The −π/2 label is moved down so that it does not overlap the axis's "−1"
         let distance = abs(angle + .pi / 2) < 0.001 ? 1.26 : 1.12
-        // Celles de 0 et de π sont remontées juste au-dessus de l'axe horizontal
+        // The 0 and π labels are raised just above the horizontal axis
         let lift = abs(sin(angle)) < 0.001 ? 0.06 * unit : 0
         context.draw(text(label, size: 0.07 * unit, color: palette.standard, kern: 1), at: p(distance * x, distance * y + lift), anchor: .center)
     }
@@ -211,10 +211,10 @@ private struct TrigoDrawing {
         line(from: p(0, y), to: p(x, y), color: palette.text, style: dash)
         line(from: p(x, 0), to: p(x, y), color: palette.text, style: dash)
 
-        // Affichage de x
+        // Draw x
         context.draw(text(TrigoModel.decimal(cos(theta), digits: 3), size: 0.08 * unit, color: palette.text),
                      at: p(x, y >= 0 ? -0.12 * unit : 0), anchor: .bottom)
-        // Affichage de y
+        // Draw y
         let yTag = text(TrigoModel.decimal(sin(theta), digits: 3), size: 0.08 * unit, color: palette.text)
         if x >= 0 {
             context.draw(yTag, at: p(-0.05 * unit, y), anchor: .trailing)
@@ -223,7 +223,7 @@ private struct TrigoDrawing {
         }
     }
 
-    /// Encadré récapitulatif : θ, cos(θ) et sin(θ).
+    /// Summary box: θ, cos(θ) and sin(θ).
     private func drawResume() {
         let size = fontSize(0.08 * unit)
         let values = TrigoValues(context: context, fontSize: size, color: palette.text)
@@ -239,16 +239,16 @@ private struct TrigoDrawing {
     }
 }
 
-/// Les trois lignes θ / cos(θ) / sin(θ), alignées sur le signe « = » et posées sur leur ligne de base.
-/// Les fractions sont superposées (numérateur, barre, dénominateur) et le radical est tracé.
+/// The three rows θ / cos(θ) / sin(θ), aligned on the "=" sign and set on their baseline.
+/// Fractions are stacked (numerator, bar, denominator) and the radical sign is drawn as a path.
 private struct TrigoValues {
     let context: GraphicsContext
     let fontSize: CGFloat
-    /// Hauteur d'une ligne, en hauteurs de capitale ; 3,7 loge tout juste une fraction dont le numérateur est un radical.
+    /// Row height, in cap heights; 3.7 just fits a fraction whose numerator is a radical.
     var lineSpacing: CGFloat = 3.7
     let color: Color
 
-    /// Un numérateur : du texte, ou la racine carrée d'un entier.
+    /// A numerator: text, or the square root of an integer.
     private enum Term {
         case text(String)
         case root(Int)
@@ -263,7 +263,7 @@ private struct TrigoValues {
     static func height(fontSize: CGFloat, lineSpacing: CGFloat) -> CGFloat { 3 * lineSpacing * font(fontSize).capHeight }
 
     private var capHeight: CGFloat { Self.font(fontSize).capHeight }
-    /// Épaisseur des traits (barre de fraction, radical), proche des déliés d'Helvetica.
+    /// Stroke width (fraction bar, radical), close to Helvetica's thin strokes.
     private var stroke: CGFloat { 0.065 * fontSize }
 
     private func resolve(_ string: String, color: Color) -> GraphicsContext.ResolvedText {
@@ -274,7 +274,7 @@ private struct TrigoValues {
         resolve(string, color: color).measure(in: unbounded).width
     }
 
-    /// Écrit `string` à partir de `x` sur la ligne de base `baseline` et renvoie sa largeur.
+    /// Writes `string` starting at `x` on the baseline `baseline` and returns its width.
     @discardableResult
     private func write(_ string: String, color: Color, x: CGFloat, baseline: CGFloat) -> CGFloat {
         let resolved = resolve(string, color: color)
@@ -282,14 +282,14 @@ private struct TrigoValues {
         return resolved.measure(in: unbounded).width
     }
 
-    /// `origin` est le coin supérieur gauche du tableau.
+    /// `origin` is the top-left corner of the table.
     func draw(theta: Double, unit: AngleUnit, at origin: CGPoint) {
         let lineHeight = lineSpacing * capHeight
         let labels = ["θ = ", "cos(θ) = ", "sin(θ) = "]
         let x = origin.x + width(labels[1])
 
         for (index, label) in labels.enumerated() {
-            // La ligne de base est un peu sous le milieu de la ligne : le radical prend de la place en haut
+            // The baseline sits a little below the middle of the row: the radical needs room above
             let baseline = origin.y + (CGFloat(index) + 0.5) * lineHeight + 0.6 * capHeight
             write(label, color: color, x: x - width(label), baseline: baseline)
             switch index {
@@ -300,7 +300,7 @@ private struct TrigoValues {
         }
     }
 
-    /// L'angle : « 5π/6 » devient une fraction, le signe restant devant la barre.
+    /// The angle: "5π/6" becomes a fraction, with the sign kept in front of the bar.
     private func writeAngle(_ label: String, x: CGFloat, baseline: CGFloat) {
         let negative = label.hasPrefix(TrigoModel.minus)
         let x = x + write(negative ? TrigoModel.minus : " ", color: color, x: x, baseline: baseline)
@@ -312,7 +312,7 @@ private struct TrigoValues {
         }
     }
 
-    /// Valeur exacte pour les angles remarquables (1/2, √2/2, √3/2), valeur approchée sinon.
+    /// Exact value for standard angles (1/2, √2/2, √3/2), approximate value otherwise.
     private func writeValue(_ value: Double, x: CGFloat, baseline: CGFloat) {
         let negative = value < -0.0001
         let x = x + write(negative ? TrigoModel.minus : " ", color: color, x: x, baseline: baseline)
@@ -328,9 +328,9 @@ private struct TrigoValues {
         }
     }
 
-    // MARK: Fractions et radicaux
+    // MARK: Fractions and radicals
 
-    /// Place occupée par le signe radical à gauche du nombre, et dépassement de la barre à droite.
+    /// Room taken by the radical sign to the left of the number, and overhang of the bar to the right.
     private var rootLead: CGFloat { 0.5 * fontSize }
     private var rootTrail: CGFloat { 0.08 * fontSize }
 
@@ -341,9 +341,9 @@ private struct TrigoValues {
         }
     }
 
-    /// Fraction superposée ; la barre est à mi-hauteur des capitales de la ligne.
+    /// Stacked fraction; the bar sits at half the cap height of the row.
     private func writeFraction(_ numerator: Term, over denominator: String, color: Color, x: CGFloat, baseline: CGFloat) {
-        let x = x + 0.12 * fontSize // détache la barre du signe moins
+        let x = x + 0.12 * fontSize // sets the bar off from the minus sign
         let pad = 0.12 * fontSize
         let gap = 0.24 * capHeight
         let numeratorWidth = width(of: numerator)
@@ -365,7 +365,7 @@ private struct TrigoValues {
         write(denominator, color: color, x: x + (barWidth - denominatorWidth) / 2, baseline: axis + stroke / 2 + gap + capHeight)
     }
 
-    /// « √n » : crochet, jambage épais, montée et barre qui couvre le nombre.
+    /// "√n": hook, thick downstroke, upstroke and a bar covering the number.
     private func writeRoot(of number: Int, color: Color, x: CGFloat, baseline: CGFloat) {
         let numberWidth = write("\(number)", color: color, x: x + rootLead, baseline: baseline)
         let top = baseline - 1.22 * capHeight

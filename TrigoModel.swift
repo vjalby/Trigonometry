@@ -6,18 +6,18 @@ enum AngleUnit: Int {
     case degree = 1
 }
 
-/// État du cercle trigonométrique : l'angle courant et le point M correspondant.
+/// State of the unit circle: the current angle and the matching point M.
 final class TrigoModel: ObservableObject {
     @Published private(set) var theta: Double = 0
     @Published private(set) var point = CGPoint(x: 1, y: 0)
     @Published private(set) var isDragging = false
 
-    /// Le geste en cours a commencé en dehors du cercle : on l'ignore jusqu'au relâchement.
+    /// The current gesture started off the circle: it is ignored until the mouse is released.
     private var rejected = false
 
-    // MARK: Souris
+    // MARK: Mouse
 
-    /// `location` est exprimé dans le repère du cercle (rayon 1, origine au centre).
+    /// `location` is expressed in the circle's coordinate system (radius 1, origin at the center).
     func drag(to location: CGPoint) {
         if isDragging {
             process(location)
@@ -31,7 +31,7 @@ final class TrigoModel: ObservableObject {
             return
         }
         process(location)
-        if abs(theta) > 6.28 { // un clic sur 0 force theta = 0 (et non 2π)
+        if abs(theta) > 6.28 { // clicking on 0 forces theta = 0 (rather than 2π)
             theta = 0
             process(location)
         }
@@ -56,21 +56,21 @@ final class TrigoModel: ObservableObject {
         point = CGPoint(x: copysign(cos(theta), location.x), y: copysign(sin(theta), location.y))
     }
 
-    // MARK: Angles remarquables
+    // MARK: Standard angles
 
     static let minus = "−"
     static let div = "∕"
-    /// Espace fine, placée entre le signe moins et un chiffre.
+    /// Thin space, placed between the minus sign and a digit.
     static let thinSpace = "\u{2009}"
 
-    /// Écriture décimale avec le séparateur choisi dans les réglages de macOS (0.33 ou 0,33)
-    /// et le vrai signe moins, détaché du nombre par une espace fine.
+    /// Decimal notation using the separator chosen in macOS settings (0.33 or 0,33)
+    /// and a true minus sign, set off from the number by a thin space.
     static func decimal(_ value: Double, digits: Int) -> String {
         (value < 0 ? minus + thinSpace : "") + String(format: "%.\(digits)f", locale: .current, abs(value))
     }
 
-    /// Accroche l'angle au multiple de π, π/2, π/3, π/4 ou π/6 le plus proche (à 0,075 rad près)
-    /// et renvoie son écriture en radians.
+    /// Snaps the angle to the nearest multiple of π, π/2, π/3, π/4 or π/6 (within 0.075 rad)
+    /// and returns its notation in radians.
     static func normalize(_ angle: Double) -> (angle: Double, label: String) {
         for fraction in [1, 2, 3, 4, 6] {
             if let result = normalize(angle, fraction: fraction) { return result }
@@ -93,7 +93,7 @@ final class TrigoModel: ObservableObject {
         }
     }
 
-    /// Écriture de l'angle dans l'unité choisie.
+    /// Notation of the angle in the chosen unit.
     static func label(for angle: Double, unit: AngleUnit) -> String {
         let normalized = normalize(angle)
         switch unit {

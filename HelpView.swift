@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Fenêtre d'aide : affiche le `ReadMe.rtf` localisé du bundle.
+/// Help window: displays the localized `ReadMe.rtf` from the bundle.
 struct HelpView: View {
     var url = Bundle.main.url(forResource: "ReadMe", withExtension: "rtf")
 
@@ -10,7 +10,7 @@ struct HelpView: View {
     }
 }
 
-/// Vue de texte AppKit en lecture seule : SwiftUI ne sait pas afficher fidèlement un fichier RTF.
+/// Read-only AppKit text view: SwiftUI cannot render an RTF file faithfully.
 private struct RichTextView: NSViewRepresentable {
     let url: URL?
 
@@ -20,7 +20,7 @@ private struct RichTextView: NSViewRepresentable {
         textView.isEditable = false
         textView.isSelectable = true
         textView.textContainerInset = NSSize(width: 16, height: 16)
-        // Le texte du RTF est noir : le système l'éclaircit en mode sombre
+        // The RTF text is black: the system lightens it in Dark Mode
         textView.usesAdaptiveColorMappingForDarkAppearance = true
 
         if let url, let text = try? NSMutableAttributedString(url: url, options: [:], documentAttributes: nil) {
@@ -32,7 +32,7 @@ private struct RichTextView: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {}
 
-    /// Rend cliquables les adresses « https://… » du texte.
+    /// Makes the "https://…" addresses in the text clickable.
     private static func addLinks(to text: NSMutableAttributedString) {
         guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return }
         let string = text.string as NSString

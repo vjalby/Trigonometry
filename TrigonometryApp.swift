@@ -38,7 +38,7 @@ struct TrigonometryApp: App {
     }
 }
 
-/// L'article du menu Aide ; une vue à part, parce que `openWindow` se lit dans l'environnement.
+/// The Help menu item; a separate view, because `openWindow` is read from the environment.
 private struct HelpCommand: View {
     @Environment(\.openWindow) private var openWindow
 
