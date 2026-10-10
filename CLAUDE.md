@@ -76,6 +76,7 @@ La logique de glisser est portée à l'identique de l'original (comparer avec `L
 - `en.lproj` et `fr.lproj`, région de développement `en`.
 - Les chaînes anglaises du code servent de clés. `en.lproj/Localizable.strings` ne contient qu'un commentaire ; toute nouvelle chaîne d'interface doit être ajoutée dans `fr.lproj/Localizable.strings`.
 - `InfoPlist.strings` (UTF-8) : nom du bundle et copyright « © Vincent Jalby, 2004-2026 », à tenir à jour dans les deux langues.
+- `README.md` à la racine : copie en Markdown du ReadMe anglais, affichée par GitHub sur la page du dépôt. À tenir à jour à la main quand `en.lproj/ReadMe.rtf` change (il n'est pas dans le bundle).
 - `ReadMe.rtf` dans chaque langue, sert d'aide (affiché dans la fenêtre d'aide, plus ouvert dans TextEdit) ; pointe vers https://vincent.jalby.org.
 
 ## Projet Xcode
