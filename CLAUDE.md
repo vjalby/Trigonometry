@@ -28,6 +28,8 @@ Changements visibles par rapport à la 1.3, tous voulus :
 
 - le menu Édition d'origine et le lien « VoJou Software WEB site » du menu Aide ont disparu ; SwiftUI fournit ses menus standard ;
 - l'encadré θ / cos / sin est aligné sur le signe « = » au lieu d'un calage par espaces ;
+- les réglages (auparavant sous le graphe) et le tableau θ / cos / sin (auparavant dans un encadré sur le graphe, visible seulement avec « Afficher sin/cos ») sont regroupés dans un panneau à droite de la fenêtre ; le graphe n'a plus de bordure noire ;
+- les nombres décimaux suivent le séparateur décimal des réglages de macOS au lieu d'imposer le point ;
 - en degrés, les étiquettes n'ont plus d'espaces de remplissage (`%.0f°` au lieu de `%3.0f°`) ;
 - l'identifiant est passé de `com.vojousoftware.trigonometry` à `org.jalby.trigonometry` (les trois réglages ont été recopiés à la main sur la machine de l'auteur) ;
 - nouvelle icône (cercle trigonométrique blanc sur fond bleu, rayon vert), l'ancienne plafonnait à 128 px ;
@@ -40,8 +42,8 @@ Quatre fichiers Swift à la racine, sans dépendance externe.
 | Fichier | Rôle |
 |---|---|
 | `TrigoModel.swift` | `TrigoModel` (ObservableObject) : `theta`, `point` (M dans le repère du cercle, rayon 1), `isDragging`. Logique de glisser, accrochage aux angles remarquables, écriture de l'angle (`label(for:unit:)`). Enum `AngleUnit` (0 radian, 1 degré). |
-| `TrigoView.swift` | Dessin complet dans un `Canvas` (struct privée `TrigoDrawing`), palette clair/sombre (`Palette`), encadré θ / cos / sin. |
-| `ContentView.swift` | Contenu de la fenêtre : `TrigoView` + `DragGesture`, radio Radians/Degrés, deux cases à cocher. Contient aussi l'impression (`TrigoPrintView`, `makePrintView`, `printDiagram`). |
+| `TrigoView.swift` | Dessin du graphe dans un `Canvas` (struct privée `TrigoDrawing`), palette clair/sombre (`Palette`), tableau θ / cos / sin (`TrigoValues`, partagé entre `TrigoValuesView` pour le panneau latéral et l'encadré de l'impression). |
+| `ContentView.swift` | Contenu de la fenêtre, en deux colonnes séparées par un filet : à gauche `TrigoView` + `DragGesture`, à droite un panneau de 190 pt sur fond gris très clair (radio Radians/Degrés, deux cases à cocher, tableau des valeurs). Contient aussi l'impression (`TrigoPrintView`, `makePrintView`, `printDiagram`). |
 | `TrigonometryApp.swift` | `@main`, scène `Window` unique, menus Format d'impression (⇧⌘P), Imprimer (⌘P) et Aide (⌘?, ouvre le `ReadMe.rtf` localisé du bundle). |
 
 Préférences via `@AppStorage`, déclarées à la fois dans `ContentView` et dans `TrigonometryApp` (qui en a besoin pour l'impression) : `prefs_angleUnit` (Int, 0 ou 1), `prefs_standardAngles`, `prefs_sinCos`. Ces clés sont celles de la version d'origine ; les garder.
@@ -54,16 +56,17 @@ La logique de glisser est portée à l'identique de l'original (comparer avec `L
 - θ parcourt ]−2π, 2π[ : l'orientation (signe de θ) est conservée quand on franchit le demi-axe négatif. θ ≥ 0 se dessine en rouge, θ < 0 en bleu.
 - Un clic sur (1, 0) ramène θ à 0 (et non à ±2π).
 - Accrochage au multiple le plus proche de π, π/2, π/3, π/4, π/6 (testés dans cet ordre) à 0,075 rad près. Hors accrochage, l'angle s'écrit avec deux décimales.
-- Avec « Afficher sin/cos » : les projections en pointillés et leurs valeurs sont masquées pendant le glisser et quand M est sur un axe ; l'encadré en haut à droite reste affiché.
-- L'encadré donne les valeurs exactes 1/2, √2/2 et √3/2, détectées par comparaison à 0,5, 0,7071 et 0,866 à 10⁻⁴ près (ce qui marche parce que l'angle a été accroché avant).
-- Impression : rayon = min(largeur, hauteur)/4 au lieu de /3, ni fond ni bordure, palette claire forcée, marges de 33 pt, dessin centré.
+- Avec « sin/cos sur le graphe » : les projections en pointillés et leurs valeurs sont masquées pendant le glisser et quand M est sur un axe. La case ne pilote que ces projections.
+- Le tableau θ / cos / sin est toujours affiché dans le panneau latéral, en Helvetica 16 pt fixe, entièrement dans la couleur du texte (l'angle n'y est pas coloré en rouge ou bleu, à la demande de l'auteur). À l'écran, il n'y a plus d'encadré sur le graphe.
+- Le tableau donne les valeurs exactes 1/2, √2/2 et √3/2 (en fractions superposées), détectées par comparaison à 0,5, 0,7071 et 0,866 à 10⁻⁴ près (ce qui marche parce que l'angle a été accroché avant).
+- Impression : rayon = min(largeur, hauteur)/4 au lieu de /3, pas de fond, palette claire forcée, marges de 33 pt, dessin centré. L'encadré θ / cos / sin est toujours dessiné en haut à droite du cercle (le panneau latéral n'est pas imprimé), à une taille proportionnelle au rayon.
 
 ### Pièges du dessin
 
-- Le texte du Canvas est en Helvetica à taille fixe (`fixedSize`, minimum 9 pt) via `Text(verbatim:)` : il n'est ni localisé ni soumis à Dynamic Type. Les nombres utilisent `String(format:)` (point décimal dans les deux langues, comme l'original).
-- Le signe moins et la barre de fraction sont les caractères U+2212 et U+2215 (`TrigoModel.minus`, `TrigoModel.div`), pas `-` et `/`.
-- Le radical est bricolé : « √ » suivi d'un tiret cadratin remonté par `baselineOffset` et ramené au-dessus du nombre par un `kerning` négatif, les deux calculés d'après les dimensions du tiret en Helvetica (`squareRoot(of:size:)`). Tout changement de police ou de taille demande de revérifier le rendu visuellement.
-- Les trois lignes de l'encadré sont alignées sur le signe « = » et posées sur leur ligne de base à la main (`firstBaseline`).
+- Le texte du Canvas est en Helvetica à taille fixe (`fixedSize`, minimum 9 pt) via `Text(verbatim:)` : il n'est ni localisé ni soumis à Dynamic Type. Les nombres décimaux passent par `TrigoModel.decimal(_:digits:)`, qui suit le séparateur décimal des réglages de macOS (`Locale.current` : 0.33 ou 0,33) ; l'original imposait le point, changement voulu par l'auteur.
+- Le signe moins et la barre de fraction sont les caractères U+2212 et U+2215 (`TrigoModel.minus`, `TrigoModel.div`), pas `-` et `/`. Cela vaut partout : radians, degrés, valeurs décimales (`decimal` pose lui-même le signe) et graduations « −1 » des axes. Devant un chiffre, le moins est suivi d'une espace fine U+2009 (`TrigoModel.thinSpace`, posée par `decimal`) ; pas devant une fraction du tableau, où `writeFraction` ménage déjà un écart, ni dans les étiquettes en radians du graphe (« −3π∕4 »).
+- Le tableau θ / cos / sin (`TrigoValues`) est composé à la main : fractions superposées (`writeFraction` : numérateur, barre à mi-hauteur des capitales, dénominateur), y compris pour l'angle (« 5π/6 » est découpé sur `TrigoModel.div`, le signe moins restant devant la barre), et radical tracé (`writeRoot` : crochet, jambage épais, montée, barre couvrant le nombre). Toutes les proportions (épaisseur des traits, écarts, hauteur de ligne de 3,83 hauteurs de capitale dans le panneau (44 pt) et 3,7 dans l'encadré imprimé) sont réglées à l'œil pour Helvetica : à revérifier visuellement si la police change.
+- Les trois lignes du tableau sont alignées sur le signe « = » et posées sur leur ligne de base à la main (`firstBaseline`) ; les étiquettes du graphe, elles, gardent l'écriture en ligne « π∕3 ».
 - L'impression est vectorielle : `ImageRenderer` rejoue le dessin SwiftUI dans le `CGContext` de la `TrigoPrintView` (une `NSView`). Ne pas la remplacer par une image bitmap.
 
 ## Localisation

@@ -6,11 +6,13 @@ struct ContentView: View {
     @AppStorage("prefs_standardAngles") private var standardAngles = false
     @AppStorage("prefs_sinCos") private var sinCos = false
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        VStack(spacing: 0) {
+        HStack(spacing: 0) {
             GeometryReader { geometry in
                 TrigoView(model: model,
-                          angleUnit: AngleUnit(rawValue: angleUnit) ?? .radian,
+                          angleUnit: unit,
                           standardAngles: standardAngles,
                           sinCos: sinCos)
                     .contentShape(Rectangle())
@@ -20,24 +22,44 @@ struct ContentView: View {
                             .onEnded { _ in model.endDrag() }
                     )
             }
-            .frame(minWidth: 400, minHeight: 281)
+            .frame(minWidth: 400, minHeight: 300)
 
-            HStack(spacing: 14) {
-                Picker("Unit:", selection: $angleUnit) {
-                    Text("Radians").tag(AngleUnit.radian.rawValue)
-                    Text("Degrees").tag(AngleUnit.degree.rawValue)
+            Divider()
+
+            // Panneau latéral : réglages et valeurs
+            VStack(alignment: .leading, spacing: 16) {
+                section("Unit") {
+                    Picker("Unit", selection: $angleUnit) {
+                        Text("Radians").tag(AngleUnit.radian.rawValue)
+                        Text("Degrees").tag(AngleUnit.degree.rawValue)
+                    }
+                    .pickerStyle(.radioGroup)
+                    .labelsHidden()
                 }
-                .pickerStyle(.radioGroup)
-                .horizontalRadioGroupLayout()
-                .fixedSize()
-                Toggle("Show standard angles", isOn: $standardAngles)
-                Toggle("Show sin/cos", isOn: $sinCos)
+                section("Display") {
+                    Toggle("Standard angles", isOn: $standardAngles)
+                    Toggle("sin/cos on the graph", isOn: $sinCos)
+                }
+                Divider()
+                section("Values") {
+                    TrigoValuesView(model: model, angleUnit: unit)
+                }
                 Spacer(minLength: 0)
             }
-            .controlSize(.small)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 11)
+            .padding(14)
+            .frame(width: 190)
+            .background(Color(white: colorScheme == .dark ? 0.17 : 0.95)) // gris très clair (sombre en mode sombre)
+        }
+    }
+
+    private var unit: AngleUnit { AngleUnit(rawValue: angleUnit) ?? .radian }
+
+    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            content()
         }
     }
 }
@@ -83,6 +105,10 @@ func printDiagram(model: TrigoModel, angleUnit: AngleUnit, standardAngles: Bool,
     printInfo.rightMargin = 33
     printInfo.isHorizontallyCentered = true
     printInfo.isVerticallyCentered = true
+    // La zone imprimable de l'imprimante peut être plus petite que la page moins les marges :
+    // sans ajustement, le dessin déborde sur une seconde page vide.
+    printInfo.horizontalPagination = .fit
+    printInfo.verticalPagination = .fit
 
     let size = CGSize(width: printInfo.paperSize.width - printInfo.leftMargin - printInfo.rightMargin,
                       height: printInfo.paperSize.height - printInfo.topMargin - printInfo.bottomMargin)

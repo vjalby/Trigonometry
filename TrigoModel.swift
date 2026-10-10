@@ -60,6 +60,14 @@ final class TrigoModel: ObservableObject {
 
     static let minus = "−"
     static let div = "∕"
+    /// Espace fine, placée entre le signe moins et un chiffre.
+    static let thinSpace = "\u{2009}"
+
+    /// Écriture décimale avec le séparateur choisi dans les réglages de macOS (0.33 ou 0,33)
+    /// et le vrai signe moins, détaché du nombre par une espace fine.
+    static func decimal(_ value: Double, digits: Int) -> String {
+        (value < 0 ? minus + thinSpace : "") + String(format: "%.\(digits)f", locale: .current, abs(value))
+    }
 
     /// Accroche l'angle au multiple de π, π/2, π/3, π/4 ou π/6 le plus proche (à 0,075 rad près)
     /// et renvoie son écriture en radians.
@@ -67,8 +75,7 @@ final class TrigoModel: ObservableObject {
         for fraction in [1, 2, 3, 4, 6] {
             if let result = normalize(angle, fraction: fraction) { return result }
         }
-        let label = angle < 0 ? minus + String(format: "%2.2f", -angle) : String(format: "%2.2f", angle)
-        return (angle, label)
+        return (angle, decimal(angle, digits: 2))
     }
 
     private static func normalize(_ angle: Double, fraction: Int) -> (angle: Double, label: String)? {
@@ -91,7 +98,7 @@ final class TrigoModel: ObservableObject {
         let normalized = normalize(angle)
         switch unit {
         case .radian: return normalized.label
-        case .degree: return String(format: "%.0f°", normalized.angle * 180 / .pi)
+        case .degree: return decimal(normalized.angle * 180 / .pi, digits: 0) + "°"
         }
     }
 }

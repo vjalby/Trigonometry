@@ -32,6 +32,27 @@ struct TrigoView: View {
     }
 }
 
+/// Tableau θ / cos(θ) / sin(θ) du panneau latéral, à taille fixe.
+struct TrigoValuesView: View {
+    @ObservedObject var model: TrigoModel
+    var angleUnit: AngleUnit
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private static let fontSize: CGFloat = 16
+    /// Interligne, en hauteurs de capitale : 44 pt à cette taille (un peu plus aéré que dans l'encadré imprimé).
+    private static let lineSpacing: CGFloat = 3.83
+
+    var body: some View {
+        Canvas { context, _ in
+            let values = TrigoValues(context: context, fontSize: Self.fontSize, lineSpacing: Self.lineSpacing,
+                                     color: Palette(dark: colorScheme == .dark).text)
+            values.draw(theta: model.theta, unit: angleUnit, at: .zero)
+        }
+        .frame(height: TrigoValues.height(fontSize: Self.fontSize, lineSpacing: Self.lineSpacing))
+    }
+}
+
 private struct Palette {
     var text, background, gray, circle, positive, negative, standard, box, boxBorder: Color
 
@@ -42,7 +63,7 @@ private struct Palette {
         circle = dark ? Color(white: 0.67) : Color(white: 0.33)
         positive = dark ? Color(nsColor: .systemRed) : Color(red: 1, green: 0, blue: 0)
         negative = dark ? Color(nsColor: .systemBlue) : Color(red: 0, green: 0, blue: 1)
-        standard = dark ? Color(nsColor: .systemPink) : Color(red: 1, green: 0, blue: 1)
+        standard = dark ? Color(white: 0.75) : Color(white: 0.25)
         box = dark ? Color(white: 0.22) : Color(white: 0.95)
         boxBorder = Color(white: 0.67)
     }
@@ -96,10 +117,8 @@ private struct TrigoDrawing {
 
     func draw() {
         if !view.printing {
-            // Trace le fond et le bord
-            let bounds = CGRect(origin: .zero, size: size)
-            context.fill(Path(bounds), with: .color(palette.background))
-            context.stroke(Path(bounds), with: .color(palette.text))
+            // Trace le fond
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(palette.background))
         }
 
         drawCircleAndAxes()
@@ -131,7 +150,8 @@ private struct TrigoDrawing {
         context.draw(text(label, size: 0.08 * unit, color: thetaColor),
                      at: p(0.4 * unit * cos(theta / 2), 0.4 * unit * sin(theta / 2)), anchor: .center)
 
-        if view.sinCos {
+        // À l'écran, les valeurs sont dans le panneau latéral
+        if view.printing {
             drawResume()
         }
     }
@@ -154,17 +174,19 @@ private struct TrigoDrawing {
 
         // Affichage des labels
         let labels: [(String, CGFloat, CGFloat)] = [
-            ("0", -0.1, -0.15), ("1", 1.05, -0.15), ("-1", -1.15, -0.15), ("1", -0.1, 1.01), ("-1", -0.15, -1.15),
+            ("0", -0.1, -0.15), ("1", 1.05, -0.15), (TrigoModel.decimal(-1, digits: 0), -1.15, -0.15), ("1", -0.1, 1.01), (TrigoModel.decimal(-1, digits: 0), -0.15, -1.15),
             ("x", 1.18, -0.15), ("y", 0.05, 1.15),
         ]
         for (string, x, y) in labels {
-            context.draw(text(string, size: 0.1 * unit, color: palette.gray), at: p(x * unit, y * unit), anchor: .bottomLeading)
+            context.draw(text(string, size: 0.08 * unit, color: palette.gray), at: p(x * unit, y * unit), anchor: .bottomLeading)
         }
 
         if view.standardAngles {
             for quarter in -2..<2 {
                 for offset in [0, Double.pi / 6, Double.pi / 4, Double.pi / 3] {
-                    drawRefPoint(offset + Double(quarter) * .pi / 2)
+                    // Le demi-tour s'écrit π (180°) et non −π
+                    let angle = offset + Double(quarter) * .pi / 2
+                    drawRefPoint(angle == -.pi ? .pi : angle)
                 }
             }
         }
@@ -175,7 +197,11 @@ private struct TrigoDrawing {
         let y = unit * sin(angle)
         dot(at: p(x, y), radius: 0.012 * unit, color: palette.text)
         let label = TrigoModel.label(for: angle, unit: view.angleUnit)
-        context.draw(text(label, size: 0.07 * unit, color: palette.standard, kern: 1), at: p(1.12 * x, 1.12 * y), anchor: .center)
+        // L'étiquette de −π/2 est descendue pour ne pas chevaucher le « −1 » de l'axe
+        let distance = abs(angle + .pi / 2) < 0.001 ? 1.26 : 1.12
+        // Celles de 0 et de π sont remontées juste au-dessus de l'axe horizontal
+        let lift = abs(sin(angle)) < 0.001 ? 0.06 * unit : 0
+        context.draw(text(label, size: 0.07 * unit, color: palette.standard, kern: 1), at: p(distance * x, distance * y + lift), anchor: .center)
     }
 
     private func drawCoordinates() {
@@ -186,10 +212,10 @@ private struct TrigoDrawing {
         line(from: p(x, 0), to: p(x, y), color: palette.text, style: dash)
 
         // Affichage de x
-        context.draw(text(String(format: "%1.3f", cos(theta)), size: 0.08 * unit, color: palette.text),
+        context.draw(text(TrigoModel.decimal(cos(theta), digits: 3), size: 0.08 * unit, color: palette.text),
                      at: p(x, y >= 0 ? -0.12 * unit : 0), anchor: .bottom)
         // Affichage de y
-        let yTag = text(String(format: "%1.3f", sin(theta)), size: 0.08 * unit, color: palette.text)
+        let yTag = text(TrigoModel.decimal(sin(theta), digits: 3), size: 0.08 * unit, color: palette.text)
         if x >= 0 {
             context.draw(yTag, at: p(-0.05 * unit, y), anchor: .trailing)
         } else {
@@ -199,59 +225,164 @@ private struct TrigoDrawing {
 
     /// Encadré récapitulatif : θ, cos(θ) et sin(θ).
     private func drawResume() {
-        let size = 0.08 * unit
-        let font = NSFont(name: "Helvetica", size: fontSize(size)) ?? .systemFont(ofSize: fontSize(size))
-        let lineHeight = 2.8 * font.xHeight
-        let labelWidth = measure(text("cos(θ) = ", size: size, color: palette.text)).width
+        let size = fontSize(0.08 * unit)
+        let values = TrigoValues(context: context, fontSize: size, color: palette.text)
+        let height = TrigoValues.height(fontSize: size, lineSpacing: values.lineSpacing) + 0.04 * unit
         let maxWidth = measure(text("cos(T) = 0.12345", size: size, color: palette.text)).width
 
-        let box = CGRect(origin: p(0.97 * unit, 0.98 * unit + 3 * lineHeight + 0.04 * unit),
-                         size: CGSize(width: maxWidth + 0.06 * unit, height: 3 * lineHeight + 0.04 * unit))
+        let box = CGRect(origin: p(0.97 * unit, 0.98 * unit + height),
+                         size: CGSize(width: maxWidth + 0.06 * unit, height: height))
         context.stroke(Path(box), with: .color(palette.boxBorder))
         context.fill(Path(box), with: .color(palette.box))
 
-        let rows: [(String, Text)] = [
-            ("θ = ", text(" " + TrigoModel.label(for: theta, unit: view.angleUnit), size: size, color: palette.text)),
-            ("cos(θ) = ", displayedValue(cos(theta), size: size)),
-            ("sin(θ) = ", displayedValue(sin(theta), size: size)),
-        ]
-        // Les trois lignes sont alignées sur le signe « = » et posées sur leur ligne de base
-        for (index, row) in rows.enumerated() {
-            let baseline = p(unit + labelWidth, unit + 0.02 * unit + (2.5 - CGFloat(index)) * lineHeight - 0.5 * font.xHeight)
-            let label = context.resolve(text(row.0, size: size, color: palette.text))
-            let labelSize = label.measure(in: unbounded)
-            context.draw(label, at: CGPoint(x: baseline.x - labelSize.width, y: baseline.y - label.firstBaseline(in: unbounded)),
-                         anchor: .topLeading)
-            let value = context.resolve(row.1)
-            context.draw(value, at: CGPoint(x: baseline.x, y: baseline.y - value.firstBaseline(in: unbounded)), anchor: .topLeading)
+        values.draw(theta: theta, unit: view.angleUnit, at: p(unit, unit + height - 0.02 * unit))
+    }
+}
+
+/// Les trois lignes θ / cos(θ) / sin(θ), alignées sur le signe « = » et posées sur leur ligne de base.
+/// Les fractions sont superposées (numérateur, barre, dénominateur) et le radical est tracé.
+private struct TrigoValues {
+    let context: GraphicsContext
+    let fontSize: CGFloat
+    /// Hauteur d'une ligne, en hauteurs de capitale ; 3,7 loge tout juste une fraction dont le numérateur est un radical.
+    var lineSpacing: CGFloat = 3.7
+    let color: Color
+
+    /// Un numérateur : du texte, ou la racine carrée d'un entier.
+    private enum Term {
+        case text(String)
+        case root(Int)
+    }
+
+    private let unbounded = CGSize(width: CGFloat.infinity, height: CGFloat.infinity)
+
+    private static func font(_ size: CGFloat) -> NSFont {
+        NSFont(name: "Helvetica", size: size) ?? .systemFont(ofSize: size)
+    }
+
+    static func height(fontSize: CGFloat, lineSpacing: CGFloat) -> CGFloat { 3 * lineSpacing * font(fontSize).capHeight }
+
+    private var capHeight: CGFloat { Self.font(fontSize).capHeight }
+    /// Épaisseur des traits (barre de fraction, radical), proche des déliés d'Helvetica.
+    private var stroke: CGFloat { 0.065 * fontSize }
+
+    private func resolve(_ string: String, color: Color) -> GraphicsContext.ResolvedText {
+        context.resolve(Text(verbatim: string).font(.custom("Helvetica", fixedSize: fontSize)).foregroundColor(color))
+    }
+
+    private func width(_ string: String) -> CGFloat {
+        resolve(string, color: color).measure(in: unbounded).width
+    }
+
+    /// Écrit `string` à partir de `x` sur la ligne de base `baseline` et renvoie sa largeur.
+    @discardableResult
+    private func write(_ string: String, color: Color, x: CGFloat, baseline: CGFloat) -> CGFloat {
+        let resolved = resolve(string, color: color)
+        context.draw(resolved, at: CGPoint(x: x, y: baseline - resolved.firstBaseline(in: unbounded)), anchor: .topLeading)
+        return resolved.measure(in: unbounded).width
+    }
+
+    /// `origin` est le coin supérieur gauche du tableau.
+    func draw(theta: Double, unit: AngleUnit, at origin: CGPoint) {
+        let lineHeight = lineSpacing * capHeight
+        let labels = ["θ = ", "cos(θ) = ", "sin(θ) = "]
+        let x = origin.x + width(labels[1])
+
+        for (index, label) in labels.enumerated() {
+            // La ligne de base est un peu sous le milieu de la ligne : le radical prend de la place en haut
+            let baseline = origin.y + (CGFloat(index) + 0.5) * lineHeight + 0.6 * capHeight
+            write(label, color: color, x: x - width(label), baseline: baseline)
+            switch index {
+            case 0: writeAngle(TrigoModel.label(for: theta, unit: unit), x: x, baseline: baseline)
+            case 1: writeValue(cos(theta), x: x, baseline: baseline)
+            default: writeValue(sin(theta), x: x, baseline: baseline)
+            }
+        }
+    }
+
+    /// L'angle : « 5π/6 » devient une fraction, le signe restant devant la barre.
+    private func writeAngle(_ label: String, x: CGFloat, baseline: CGFloat) {
+        let negative = label.hasPrefix(TrigoModel.minus)
+        let x = x + write(negative ? TrigoModel.minus : " ", color: color, x: x, baseline: baseline)
+        let parts = (negative ? String(label.dropFirst()) : label).components(separatedBy: TrigoModel.div)
+        if parts.count == 2 {
+            writeFraction(.text(parts[0]), over: parts[1], color: color, x: x, baseline: baseline)
+        } else {
+            write(parts[0], color: color, x: x, baseline: baseline)
         }
     }
 
     /// Valeur exacte pour les angles remarquables (1/2, √2/2, √3/2), valeur approchée sinon.
-    private func displayedValue(_ value: Double, size: CGFloat) -> Text {
-        let sign = text(value < -0.0001 ? TrigoModel.minus : " ", size: size, color: palette.text)
+    private func writeValue(_ value: Double, x: CGFloat, baseline: CGFloat) {
+        let negative = value < -0.0001
+        let x = x + write(negative ? TrigoModel.minus : " ", color: color, x: x, baseline: baseline)
         let magnitude = abs(value)
         if abs(magnitude - 0.866) < 0.0001 {
-            return sign + squareRoot(of: 3, size: size)
+            writeFraction(.root(3), over: "2", color: color, x: x, baseline: baseline)
         } else if abs(magnitude - 0.7071) < 0.0001 {
-            return sign + squareRoot(of: 2, size: size)
+            writeFraction(.root(2), over: "2", color: color, x: x, baseline: baseline)
         } else if abs(magnitude - 0.5) < 0.0001 {
-            return sign + text("1\(TrigoModel.div)2", size: size, color: palette.text)
+            writeFraction(.text("1"), over: "2", color: color, x: x, baseline: baseline)
+        } else {
+            write((negative ? TrigoModel.thinSpace : "") + TrigoModel.decimal(magnitude, digits: 3), color: color, x: x, baseline: baseline)
         }
-        return sign + text(String(format: "%1.3f", magnitude), size: size, color: palette.text)
     }
 
-    /// « √n/2 » : la barre du radical est un tiret cadratin remonté et ramené au-dessus du nombre.
-    private func squareRoot(of number: Int, size: CGFloat) -> Text {
-        let font = NSFont(name: "Helvetica", size: fontSize(size)) ?? .systemFont(ofSize: fontSize(size))
-        let bar = ("—" as NSString).size(withAttributes: [.font: font])
-        func part(_ string: String, kern: CGFloat = 0, baseline: CGFloat = 0) -> Text {
-            text(string, size: size, color: palette.text, kern: kern).baselineOffset(baseline)
+    // MARK: Fractions et radicaux
+
+    /// Place occupée par le signe radical à gauche du nombre, et dépassement de la barre à droite.
+    private var rootLead: CGFloat { 0.5 * fontSize }
+    private var rootTrail: CGFloat { 0.08 * fontSize }
+
+    private func width(of term: Term) -> CGFloat {
+        switch term {
+        case .text(let string): return width(string)
+        case .root(let number): return rootLead + width("\(number)") + rootTrail
         }
-        return part("√", kern: -0.01 * bar.height)
-            + part("—", kern: -0.65 * bar.height, baseline: 0.62 * bar.width)
-            + part("\(number) ")
-            + part(TrigoModel.div, baseline: 0.2 * bar.width)
-            + part("2")
+    }
+
+    /// Fraction superposée ; la barre est à mi-hauteur des capitales de la ligne.
+    private func writeFraction(_ numerator: Term, over denominator: String, color: Color, x: CGFloat, baseline: CGFloat) {
+        let x = x + 0.12 * fontSize // détache la barre du signe moins
+        let pad = 0.12 * fontSize
+        let gap = 0.24 * capHeight
+        let numeratorWidth = width(of: numerator)
+        let denominatorWidth = width(denominator)
+        let barWidth = max(numeratorWidth, denominatorWidth) + 2 * pad
+        let axis = baseline - 0.5 * capHeight
+
+        var bar = Path()
+        bar.move(to: CGPoint(x: x, y: axis))
+        bar.addLine(to: CGPoint(x: x + barWidth, y: axis))
+        context.stroke(bar, with: .color(color), lineWidth: stroke)
+
+        let numeratorX = x + (barWidth - numeratorWidth) / 2
+        let numeratorBaseline = axis - stroke / 2 - gap
+        switch numerator {
+        case .text(let string): write(string, color: color, x: numeratorX, baseline: numeratorBaseline)
+        case .root(let number): writeRoot(of: number, color: color, x: numeratorX, baseline: numeratorBaseline)
+        }
+        write(denominator, color: color, x: x + (barWidth - denominatorWidth) / 2, baseline: axis + stroke / 2 + gap + capHeight)
+    }
+
+    /// « √n » : crochet, jambage épais, montée et barre qui couvre le nombre.
+    private func writeRoot(of number: Int, color: Color, x: CGFloat, baseline: CGFloat) {
+        let numberWidth = write("\(number)", color: color, x: x + rootLead, baseline: baseline)
+        let top = baseline - 1.22 * capHeight
+        let hook = CGPoint(x: x + 0.14 * fontSize, y: baseline - 0.5 * capHeight)
+        let bottom = CGPoint(x: x + 0.27 * fontSize, y: baseline)
+
+        var thin = Path()
+        thin.move(to: CGPoint(x: x + 0.04 * fontSize, y: baseline - 0.4 * capHeight))
+        thin.addLine(to: hook)
+        thin.move(to: bottom)
+        thin.addLine(to: CGPoint(x: x + 0.44 * fontSize, y: top))
+        thin.addLine(to: CGPoint(x: x + rootLead + numberWidth + rootTrail, y: top))
+        context.stroke(thin, with: .color(color), style: StrokeStyle(lineWidth: stroke, lineCap: .round, lineJoin: .miter))
+
+        var thick = Path()
+        thick.move(to: hook)
+        thick.addLine(to: bottom)
+        context.stroke(thick, with: .color(color), style: StrokeStyle(lineWidth: 1.7 * stroke, lineCap: .round))
     }
 }

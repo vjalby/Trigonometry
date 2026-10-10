@@ -11,7 +11,7 @@ struct TrigonometryApp: App {
         Window("Trigonometry", id: "trigoWindow") {
             ContentView(model: model)
         }
-        .defaultSize(width: 480, height: 345)
+        .defaultSize(width: 671, height: 380)
         .commands {
             CommandGroup(replacing: .printItem) {
                 Button("Page Setup…") {

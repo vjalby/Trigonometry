@@ -1,9 +1,11 @@
 /* Window */
-"Unit:" = "Unité :";
+"Unit" = "Unité";
 "Radians" = "Radians";
 "Degrees" = "Degrés";
-"Show standard angles" = "Afficher les angles standards";
-"Show sin/cos" = "Afficher sin/cos";
+"Display" = "Affichage";
+"Standard angles" = "Angles remarquables";
+"sin/cos on the graph" = "sin/cos sur le graphe";
+"Values" = "Valeurs";
 
 /* Menus */
 "Page Setup…" = "Format d’impression…";
